@@ -2,9 +2,6 @@
 
 realtime satellite detection and identification platform
 
-it watches frames and politely asks  
-is that a satellite or just camera drama
-
 ## what this does
 
 - ingests fits and png frames
