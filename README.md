@@ -17,7 +17,7 @@ is that a satellite or just camera drama
 ## quick setup
 
 ```bash
-cd /Users/warisareshi/Developer/asta
+cd asta
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -34,6 +34,18 @@ optional but recommended
 ```bash
 uvicorn main:create_uvicorn_app --factory --host 0.0.0.0 --port 8000
 ```
+
+## run desktop gui mode
+
+```bash
+python main.py --mode gui
+```
+
+gui features
+
+- choose input and output directories
+- run batch processing with live progress logs
+- start and stop realtime api from the same window
 
 health and config checks
 

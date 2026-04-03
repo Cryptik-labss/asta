@@ -25,7 +25,7 @@ LOGGER = logging.getLogger("asta.main")
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="ASTA realtime satellite detection")
-    parser.add_argument("--mode", choices=["realtime", "batch"], default="realtime")
+    parser.add_argument("--mode", choices=["realtime", "batch", "gui"], default="realtime")
     parser.add_argument("--input", default=None, help="Input directory for batch mode")
     parser.add_argument("--output", default=None, help="Output directory override")
     return parser.parse_args()
@@ -90,6 +90,10 @@ async def _amain() -> None:
     cfg = _apply_cli_overrides(load_config(), args)
     if cfg.mode == "realtime":
         await _run_realtime(cfg)
+    elif cfg.mode == "gui":
+        from app.gui.mode import run_gui  # lazy import keeps non-gui runtime lightweight
+
+        run_gui(cfg)
     else:
         await _run_batch(cfg)
 

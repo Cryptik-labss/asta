@@ -111,6 +111,7 @@ Expected immediate response shape:
 
 - Realtime startup: `python main.py --mode realtime`
   Alternative: `uvicorn main:create_uvicorn_app --factory`
+- GUI startup: `python main.py --mode gui`
 - Health: `GET /health`
 - Config update: `PUT /config` then `GET /config`
 - WS ingest: `/ws/frames` with base64 PNG/FITS frame

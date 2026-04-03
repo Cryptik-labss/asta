@@ -5,7 +5,7 @@ python-dotenv
 numpy
 opencv-python-headless
 astropy
-tensorflow
+tensorflow; python_version < "3.14"
 sgp4
 skyfield
 Pillow
