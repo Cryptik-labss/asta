@@ -127,7 +127,7 @@ check outputs
 - `outputs/satellite_report.csv`
 - `outputs/annotated/*.png`
 
-## tiny acceptance walk
+## all checks
 
 - realtime boots successfully
 - `GET /health` reports queue size
@@ -137,7 +137,7 @@ check outputs
 - bad weather frames get skipped if configured
 - strict id misses land in `id_od_review_queue.json`
 
-## one honest warning
+## note
 
 if the frame quality is chaotic  
 the model may become dramatically cautious
