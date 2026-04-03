@@ -3,8 +3,8 @@
 ## 1. Setup
 
 ```bash
-cd /Users/warisareshi/Developer/asta
-python3 -m venv .venv
+cd asta
+uv venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp config.example.env .env
@@ -39,10 +39,10 @@ Check outputs:
 
 ## 4. Realtime API Test
 
-Start API:
+Start API with `uvicorn`:
 
 ```bash
-python main.py --mode realtime
+uvicorn main:create_uvicorn_app --factory --host 0.0.0.0 --port 8000
 ```
 
 In another terminal:
@@ -110,6 +110,7 @@ Expected immediate response shape:
 ## 6. Acceptance Checklist Mapping
 
 - Realtime startup: `python main.py --mode realtime`
+  Alternative: `uvicorn main:create_uvicorn_app --factory`
 - Health: `GET /health`
 - Config update: `PUT /config` then `GET /config`
 - WS ingest: `/ws/frames` with base64 PNG/FITS frame

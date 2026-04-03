@@ -41,26 +41,11 @@ def _apply_cli_overrides(cfg: Config, args: argparse.Namespace) -> Config:
 
 
 async def _run_realtime(cfg: Config) -> None:
-    tles = load_tle_file(cfg.tle_active_path)
-    if cfg.tle_historical_path:
-        tles.extend(load_tle_file(cfg.tle_historical_path))
-
-    queue: asyncio.Queue[Frame] = asyncio.Queue(maxsize=cfg.max_queue_size)
-    init_output_store(cfg.output_dir)
-
-    workers_task = asyncio.create_task(start_workers(queue, cfg, n=4, tles=tles))
-    app = create_app(cfg, queue, tles)
+    # start the realtime service
+    app = create_uvicorn_app(cfg)
     config = uvicorn.Config(app=app, host="0.0.0.0", port=8000, loop="asyncio")
     server = uvicorn.Server(config)
-
-    try:
-        await server.serve()
-    finally:
-        workers_task.cancel()
-        try:
-            await workers_task
-        except asyncio.CancelledError:
-            LOGGER.info("Workers cancelled")
+    await server.serve()
 
 
 def _build_frame(file_path: Path) -> Frame:
@@ -72,6 +57,7 @@ def _build_frame(file_path: Path) -> Frame:
 def _collect_input_files(source_path: str) -> list[Path]:
     root = Path(source_path)
     files: list[Path] = []
+    # collect all supported frame files for batch mode
     for ext in ("*.fits", "*.fit", "*.fts", "*.png", "*.jpg", "*.jpeg"):
         files.extend(root.rglob(ext))
     return sorted(set(files))
@@ -110,3 +96,32 @@ async def _amain() -> None:
 
 if __name__ == "__main__":
     asyncio.run(_amain())
+
+
+def create_uvicorn_app(cfg: Config | None = None):
+    cfg = cfg or load_config()
+    tles = load_tle_file(cfg.tle_active_path)
+    if cfg.tle_historical_path:
+        tles.extend(load_tle_file(cfg.tle_historical_path))
+
+    queue: asyncio.Queue[Frame] = asyncio.Queue(maxsize=cfg.max_queue_size)
+    # bounded queue protects memory under load
+    init_output_store(cfg.output_dir)
+    app = create_app(cfg, queue, tles)
+
+    @app.on_event("startup")
+    async def _startup_workers() -> None:
+        app.state.workers_task = asyncio.create_task(start_workers(queue, cfg, n=4, tles=tles))
+        LOGGER.info("Worker pool started")
+
+    @app.on_event("shutdown")
+    async def _shutdown_workers() -> None:
+        workers_task = getattr(app.state, "workers_task", None)
+        if workers_task is not None:
+            workers_task.cancel()
+            try:
+                await workers_task
+            except asyncio.CancelledError:
+                LOGGER.info("Workers cancelled")
+
+    return app

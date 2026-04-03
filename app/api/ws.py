@@ -30,6 +30,7 @@ def _parse_timestamp(raw: str | None) -> datetime:
 async def ws_frames(websocket: WebSocket) -> None:
     await websocket.accept()
     queue = websocket.app.state.frame_queue
+    # websocket ingest loop for incoming frames
     while True:
         try:
             raw = await websocket.receive_text()
@@ -61,12 +62,14 @@ async def ws_frames(websocket: WebSocket) -> None:
 
             if queue.full():
                 LOGGER.warning("Queue full: dropping frame %s", frame_id)
+                # queue is full so this frame gets dropped
                 await websocket.send_json(
                     {"type": "error", "frame_id": frame_id, "reason": "queue_full"}
                 )
                 continue
 
             queue.put_nowait(frame)
+            # send immediate ack while workers process in background
             await websocket.send_json(
                 {
                     "type": "detection",

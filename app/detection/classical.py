@@ -12,6 +12,7 @@ def classical_detect(img: np.ndarray, threshold: float) -> list[Trail]:
     else:
         gray = img.astype(np.uint8)
 
+    # classical edge detection remains a reliable fallback
     edges = cv2.Canny(gray, 50, 150)
     lines = cv2.HoughLinesP(
         edges,
@@ -30,6 +31,7 @@ def classical_detect(img: np.ndarray, threshold: float) -> list[Trail]:
         x1, y1, x2, y2 = ln[0]
         length = float(np.hypot(x2 - x1, y2 - y1))
         if length < min_len:
+            # short segments are usually noise
             continue
         conf = min(0.99, max(threshold, length / (min(img.shape[:2]) + 1.0)))
         trails.append(

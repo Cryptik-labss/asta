@@ -69,6 +69,7 @@ def _trail_to_record(frame: Result, trail, idx: int) -> dict[str, Any]:
 def write_result(result: Result, cfg: Config) -> None:
     out_dir = Path(cfg.output_dir)
     with _LOCK:
+        # single lock keeps output files consistent
         _STORE["results"].append(result)
         frame_payload = {
             "frame_id": result.frame_id,
@@ -106,6 +107,7 @@ def _summary() -> dict[str, Any]:
 
 
 def _flush_locked(out_dir: Path) -> None:
+    # write all artifacts on each update for realtime visibility
     _write_json(out_dir / "satellite_summary.json", _summary())
     _write_json(out_dir / "satellite_frames.json", _STORE["frames"])
     _write_json(out_dir / "satellite_trails.json", _STORE["trails"])

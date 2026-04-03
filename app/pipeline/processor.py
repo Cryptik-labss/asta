@@ -30,6 +30,7 @@ _MODEL_CACHE: dict[tuple[str, float], ASTAModel] = {}
 def _get_model(cfg: Config) -> ASTAModel:
     key = (cfg.asta_model_path, cfg.detection_threshold)
     if key not in _MODEL_CACHE:
+        # cache the model once to avoid repeated load cost
         _MODEL_CACHE[key] = ASTAModel(cfg.asta_model_path, cfg.detection_threshold)
     return _MODEL_CACHE[key]
 
@@ -41,7 +42,7 @@ def _normalise(img: np.ndarray) -> np.ndarray:
 
 
 def _calibrate(img: np.ndarray) -> np.ndarray:
-    # Baseline denoise + contrast normalization for detection stability.
+    # basic denoise and contrast normalization before detection
     gray = img if img.ndim == 2 else cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     denoised = cv2.GaussianBlur(gray, (3, 3), sigmaX=0)
     norm = cv2.equalizeHist(denoised.astype(np.uint8))
@@ -109,6 +110,7 @@ def process_frame(frame: Frame, cfg: Config, tles: list[TLERecord] | None = None
     weather = evaluate_frame(img, cfg)
     result.weather = weather
     if not weather.passed and cfg.weather_skip_bad_frames:
+        # skip low quality frames when weather gating is enabled
         result.status = "skipped"
         result.events.append(
             _event(
@@ -123,6 +125,7 @@ def process_frame(frame: Frame, cfg: Config, tles: list[TLERecord] | None = None
 
     img_cal = _calibrate(img)
     model = _get_model(cfg)
+    # combine learned and classical detection paths
     keras_trails = model.detect(img_cal)
     classical_trails = classical_detect(img_cal, cfg.detection_threshold)
     trails = merge_trails(keras_trails, classical_trails)
@@ -149,6 +152,7 @@ def process_frame(frame: Frame, cfg: Config, tles: list[TLERecord] | None = None
     for tr in trails:
         try:
             if wcs_ok:
+                # convert pixel coordinates to sky coordinates
                 tr = _with_radec(tr, wcs_meta)
             else:
                 result.astrometry_review_items.append(
