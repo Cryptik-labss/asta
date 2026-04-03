@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+websockets
+python-dotenv
+numpy
+opencv-python-headless
+astropy
+tensorflow
+sgp4
+skyfield
+Pillow
+pandas
